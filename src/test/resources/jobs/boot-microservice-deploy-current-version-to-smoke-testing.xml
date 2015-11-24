@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project>
+  <actions/>
+  <description/>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <jenkins.plugins.slack.SlackNotifier_-SlackJobProperty>
+      <startNotification>true</startNotification>
+      <notifySuccess>true</notifySuccess>
+      <notifyAborted>true</notifyAborted>
+      <notifyNotBuilt>true</notifyNotBuilt>
+      <notifyUnstable>true</notifyUnstable>
+      <notifyFailure>true</notifyFailure>
+      <notifyBackToNormal>true</notifyBackToNormal>
+      <notifyRepeatedFailure>true</notifyRepeatedFailure>
+      <includeTestSummary>true</includeTestSummary>
+      <showCommitList>true</showCommitList>
+    </jenkins.plugins.slack.SlackNotifier_-SlackJobProperty>
+    <se.diabol.jenkins.pipeline.PipelineProperty>
+      <taskName>Deploy current version to smoke testing</taskName>
+      <stageName>Run smoke tests &amp; rollback scenario</stageName>
+    </se.diabol.jenkins.pipeline.PipelineProperty>
+  </properties>
+  <scm class="hudson.scm.NullSCM"/>
+  <canRoam>true</canRoam>
+  <disabled>false</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <triggers class="vector"/>
+  <concurrentBuild>false</concurrentBuild>
+  <builders/>
+  <publishers>
+    <org.jenkinsci.plugins.rundeck.RundeckNotifier>
+      <jobId>deploy:deploy</jobId>
+      <options>app_group_id=io.fourfinance.uservice
+env=smoke
+app_artifact=boot-microservice
+app_name=boot-microservice
+app_version=${APP_VERSION}</options>
+      <nodeFilters/>
+      <tag/>
+      <shouldWaitForRundeckJob>true</shouldWaitForRundeckJob>
+      <shouldFailTheBuild>true</shouldFailTheBuild>
+      <includeRundeckLogs>true</includeRundeckLogs>
+    </org.jenkinsci.plugins.rundeck.RundeckNotifier>
+    <jenkins.plugins.slack.SlackNotifier/>
+    <hudson.plugins.parameterizedtrigger.BuildTrigger>
+      <configs>
+        <hudson.plugins.parameterizedtrigger.BuildTriggerConfig>
+          <projects>boot-microservice-run-smoke-tests-for-current-version</projects>
+          <condition>SUCCESS</condition>
+          <triggerWithNoParameters>true</triggerWithNoParameters>
+          <configs>
+            <hudson.plugins.parameterizedtrigger.NodeParameters/>
+            <hudson.plugins.parameterizedtrigger.CurrentBuildParameters/>
+          </configs>
+        </hudson.plugins.parameterizedtrigger.BuildTriggerConfig>
+      </configs>
+    </hudson.plugins.parameterizedtrigger.BuildTrigger>
+  </publishers>
+  <buildWrappers>
+    <se.diabol.jenkins.pipeline.PipelineVersionContributor>
+      <versionTemplate>${ENV,var="PIPELINE_VERSION"}</versionTemplate>
+      <updateDisplayName>true</updateDisplayName>
+    </se.diabol.jenkins.pipeline.PipelineVersionContributor>
+  </buildWrappers>
+</project>

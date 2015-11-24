@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project>
+  <actions/>
+  <description/>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <EnvInjectJobProperty>
+      <info>
+        <groovyScriptContent>def gitRef = '${GIT_COMMIT}'
+
+if ("${PREV_APP_VERSION}") {
+    gitRef = "release/${PREV_APP_VERSION}"
+}
+
+return [GIT_CHECKOUT_REF: gitRef]</groovyScriptContent>
+        <loadFilesFromMaster>false</loadFilesFromMaster>
+      </info>
+      <on>true</on>
+      <keepJenkinsSystemVariables>true</keepJenkinsSystemVariables>
+      <keepBuildVariables>true</keepBuildVariables>
+      <overrideBuildParameters>false</overrideBuildParameters>
+      <contributors/>
+    </EnvInjectJobProperty>
+    <jenkins.plugins.slack.SlackNotifier_-SlackJobProperty>
+      <startNotification>true</startNotification>
+      <notifySuccess>true</notifySuccess>
+      <notifyAborted>true</notifyAborted>
+      <notifyNotBuilt>true</notifyNotBuilt>
+      <notifyUnstable>true</notifyUnstable>
+      <notifyFailure>true</notifyFailure>
+      <notifyBackToNormal>true</notifyBackToNormal>
+      <notifyRepeatedFailure>true</notifyRepeatedFailure>
+      <includeTestSummary>true</includeTestSummary>
+      <showCommitList>true</showCommitList>
+    </jenkins.plugins.slack.SlackNotifier_-SlackJobProperty>
+    <se.diabol.jenkins.pipeline.PipelineProperty>
+      <taskName>Run smoke tests for previous production version</taskName>
+      <stageName>Run smoke tests &amp; rollback scenario</stageName>
+    </se.diabol.jenkins.pipeline.PipelineProperty>
+  </properties>
+  <canRoam>true</canRoam>
+  <disabled>false</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <triggers class="vector"/>
+  <concurrentBuild>false</concurrentBuild>
+  <builders>
+    <org.jenkinsci.plugins.conditionalbuildstep.ConditionalBuilder>
+      <runCondition class="org.jenkins_ci.plugins.run_condition.contributed.ShellCondition">
+        <command>[ ! -z "${PREV_APP_VERSION}" ]</command>
+      </runCondition>
+      <runner class="org.jenkins_ci.plugins.run_condition.BuildStepRunner$Fail"/>
+      <conditionalbuilders>
+        <hudson.plugins.gradle.Gradle>
+          <description/>
+          <switches/>
+          <tasks>clean smokeTest -DsmokeTestAppUrl="http://app.pl.smoke.dev.4finance.net:8888"</tasks>
+          <rootBuildScriptDir/>
+          <buildFile/>
+          <gradleName>(Default)</gradleName>
+          <useWrapper>true</useWrapper>
+          <makeExecutable>false</makeExecutable>
+          <fromRootBuildScriptDir>true</fromRootBuildScriptDir>
+        </hudson.plugins.gradle.Gradle>
+      </conditionalbuilders>
+    </org.jenkinsci.plugins.conditionalbuildstep.ConditionalBuilder>
+  </builders>
+  <publishers>
+    <org.jenkins__ci.plugins.flexible__publish.FlexiblePublisher>
+      <publishers>
+        <org.jenkins__ci.plugins.flexible__publish.ConditionalPublisher>
+          <condition class="org.jenkins_ci.plugins.run_condition.contributed.ShellCondition">
+            <command>[ ! -z "${PREV_APP_VERSION}" ]</command>
+          </condition>
+          <publisherList>
+            <hudson.tasks.junit.JUnitResultArchiver>
+              <testResults>**/build/test-results/**/*.xml</testResults>
+              <keepLongStdio>false</keepLongStdio>
+              <testDataPublishers/>
+            </hudson.tasks.junit.JUnitResultArchiver>
+          </publisherList>
+          <runner class="org.jenkins_ci.plugins.run_condition.BuildStepRunner$Fail"/>
+        </org.jenkins__ci.plugins.flexible__publish.ConditionalPublisher>
+      </publishers>
+    </org.jenkins__ci.plugins.flexible__publish.FlexiblePublisher>
+    <jenkins.plugins.slack.SlackNotifier/>
+    <au.com.centrumsystems.hudson.plugin.buildpipeline.trigger.BuildPipelineTrigger>
+      <downstreamProjectNames>boot-microservice-deploy-current-version-to-production</downstreamProjectNames>
+      <configs>
+        <hudson.plugins.parameterizedtrigger.NodeParameters/>
+        <hudson.plugins.parameterizedtrigger.CurrentBuildParameters/>
+      </configs>
+    </au.com.centrumsystems.hudson.plugin.buildpipeline.trigger.BuildPipelineTrigger>
+  </publishers>
+  <buildWrappers>
+    <se.diabol.jenkins.pipeline.PipelineVersionContributor>
+      <versionTemplate>${ENV,var="PIPELINE_VERSION"}</versionTemplate>
+      <updateDisplayName>true</updateDisplayName>
+    </se.diabol.jenkins.pipeline.PipelineVersionContributor>
+  </buildWrappers>
+  <scm class="hudson.plugins.git.GitSCM">
+    <userRemoteConfigs>
+      <hudson.plugins.git.UserRemoteConfig>
+        <name>origin</name>
+        <url>https://github.com/4finance/boot-microservice.git</url>
+      </hudson.plugins.git.UserRemoteConfig>
+    </userRemoteConfigs>
+    <branches>
+      <hudson.plugins.git.BranchSpec>
+        <name>${GIT_CHECKOUT_REF}</name>
+      </hudson.plugins.git.BranchSpec>
+    </branches>
+    <configVersion>2</configVersion>
+    <disableSubmodules>false</disableSubmodules>
+    <recursiveSubmodules>false</recursiveSubmodules>
+    <doGenerateSubmoduleConfigurations>false</doGenerateSubmoduleConfigurations>
+    <authorOrCommitter>false</authorOrCommitter>
+    <clean>false</clean>
+    <wipeOutWorkspace>false</wipeOutWorkspace>
+    <pruneBranches>false</pruneBranches>
+    <remotePoll>false</remotePoll>
+    <ignoreNotifyCommit>false</ignoreNotifyCommit>
+    <gitTool>Default</gitTool>
+    <skipTag>true</skipTag>
+  </scm>
+</project>

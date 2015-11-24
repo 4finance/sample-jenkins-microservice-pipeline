@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project>
+  <actions/>
+  <description/>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <jenkins.plugins.slack.SlackNotifier_-SlackJobProperty>
+      <startNotification>true</startNotification>
+      <notifySuccess>true</notifySuccess>
+      <notifyAborted>true</notifyAborted>
+      <notifyNotBuilt>true</notifyNotBuilt>
+      <notifyUnstable>true</notifyUnstable>
+      <notifyFailure>true</notifyFailure>
+      <notifyBackToNormal>true</notifyBackToNormal>
+      <notifyRepeatedFailure>true</notifyRepeatedFailure>
+      <includeTestSummary>true</includeTestSummary>
+      <showCommitList>true</showCommitList>
+    </jenkins.plugins.slack.SlackNotifier_-SlackJobProperty>
+    <se.diabol.jenkins.pipeline.PipelineProperty>
+      <taskName>Deploy current version to production</taskName>
+      <stageName>Deploy to prod</stageName>
+    </se.diabol.jenkins.pipeline.PipelineProperty>
+  </properties>
+  <scm class="hudson.scm.NullSCM"/>
+  <canRoam>true</canRoam>
+  <disabled>false</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <triggers class="vector"/>
+  <concurrentBuild>false</concurrentBuild>
+  <builders/>
+  <publishers>
+    <org.jenkinsci.plugins.rundeck.RundeckNotifier>
+      <jobId>deploy:deploy</jobId>
+      <options>app_group_id=io.fourfinance.uservice
+env=prod
+app_artifact=boot-microservice
+app_name=boot-microservice
+app_version=${APP_VERSION}</options>
+      <nodeFilters/>
+      <tag/>
+      <shouldWaitForRundeckJob>true</shouldWaitForRundeckJob>
+      <shouldFailTheBuild>true</shouldFailTheBuild>
+      <includeRundeckLogs>true</includeRundeckLogs>
+    </org.jenkinsci.plugins.rundeck.RundeckNotifier>
+    <org.jenkins__ci.plugins.flexible__publish.FlexiblePublisher>
+      <publishers>
+        <org.jenkins__ci.plugins.flexible__publish.ConditionalPublisher>
+          <condition class="org.jenkins_ci.plugins.run_condition.contributed.ShellCondition">
+            <command>[ ! "${SKIP_TEAM_NOTIFICATIONS}" = true ]</command>
+          </condition>
+          <publisherList>
+            <hudson.plugins.emailext.ExtendedEmailPublisher>
+              <recipientList>$DEFAULT_RECIPIENTS</recipientList>
+              <contentType>default</contentType>
+              <defaultSubject>$DEFAULT_SUBJECT</defaultSubject>
+              <defaultContent>$DEFAULT_CONTENT</defaultContent>
+              <attachmentsPattern/>
+              <configuredTriggers>
+                <hudson.plugins.emailext.plugins.trigger.SuccessTrigger>
+                  <email>
+                    <recipientList/>
+                    <subject>boot-microservice current version ${APP_VERSION} successfully deployed to prod</subject>
+                    <body>$PROJECT_DEFAULT_CONTENT</body>
+                    <sendToDevelopers>false</sendToDevelopers>
+                    <sendToRequester>true</sendToRequester>
+                    <includeCulprits>false</includeCulprits>
+                    <sendToRecipientList>true</sendToRecipientList>
+                  </email>
+                </hudson.plugins.emailext.plugins.trigger.SuccessTrigger>
+              </configuredTriggers>
+            </hudson.plugins.emailext.ExtendedEmailPublisher>
+          </publisherList>
+          <runner class="org.jenkins_ci.plugins.run_condition.BuildStepRunner$Fail"/>
+        </org.jenkins__ci.plugins.flexible__publish.ConditionalPublisher>
+      </publishers>
+    </org.jenkins__ci.plugins.flexible__publish.FlexiblePublisher>
+    <jenkins.plugins.slack.SlackNotifier/>
+    <hudson.plugins.parameterizedtrigger.BuildTrigger>
+      <configs>
+        <hudson.plugins.parameterizedtrigger.BuildTriggerConfig>
+          <projects>boot-microservice-tag-release</projects>
+          <condition>SUCCESS</condition>
+          <triggerWithNoParameters>true</triggerWithNoParameters>
+          <configs>
+            <hudson.plugins.parameterizedtrigger.NodeParameters/>
+            <hudson.plugins.parameterizedtrigger.CurrentBuildParameters/>
+          </configs>
+        </hudson.plugins.parameterizedtrigger.BuildTriggerConfig>
+      </configs>
+    </hudson.plugins.parameterizedtrigger.BuildTrigger>
+    <hudson.plugins.parameterizedtrigger.BuildTrigger>
+      <configs>
+        <hudson.plugins.parameterizedtrigger.BuildTriggerConfig>
+          <projects>boot-microservice-deploy-previous-production-version-to-production</projects>
+          <condition>UNSTABLE_OR_WORSE</condition>
+          <triggerWithNoParameters>true</triggerWithNoParameters>
+          <configs>
+            <hudson.plugins.parameterizedtrigger.NodeParameters/>
+            <hudson.plugins.parameterizedtrigger.CurrentBuildParameters/>
+          </configs>
+        </hudson.plugins.parameterizedtrigger.BuildTriggerConfig>
+      </configs>
+    </hudson.plugins.parameterizedtrigger.BuildTrigger>
+  </publishers>
+  <buildWrappers>
+    <se.diabol.jenkins.pipeline.PipelineVersionContributor>
+      <versionTemplate>${ENV,var="PIPELINE_VERSION"}</versionTemplate>
+      <updateDisplayName>true</updateDisplayName>
+    </se.diabol.jenkins.pipeline.PipelineVersionContributor>
+  </buildWrappers>
+</project>

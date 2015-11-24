@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project>
+  <actions/>
+  <description/>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <EnvInjectJobProperty>
+      <info>
+        <propertiesContent>MICROSERVICE_RELEASE_TAG_PREFIX=release</propertiesContent>
+        <loadFilesFromMaster>false</loadFilesFromMaster>
+      </info>
+      <on>true</on>
+      <keepJenkinsSystemVariables>true</keepJenkinsSystemVariables>
+      <keepBuildVariables>true</keepBuildVariables>
+      <overrideBuildParameters>false</overrideBuildParameters>
+      <contributors/>
+    </EnvInjectJobProperty>
+    <jenkins.plugins.slack.SlackNotifier_-SlackJobProperty>
+      <startNotification>true</startNotification>
+      <notifySuccess>true</notifySuccess>
+      <notifyAborted>true</notifyAborted>
+      <notifyNotBuilt>true</notifyNotBuilt>
+      <notifyUnstable>true</notifyUnstable>
+      <notifyFailure>true</notifyFailure>
+      <notifyBackToNormal>true</notifyBackToNormal>
+      <notifyRepeatedFailure>true</notifyRepeatedFailure>
+      <includeTestSummary>true</includeTestSummary>
+      <showCommitList>true</showCommitList>
+    </jenkins.plugins.slack.SlackNotifier_-SlackJobProperty>
+    <se.diabol.jenkins.pipeline.PipelineProperty>
+      <taskName>Find previous production deployed version</taskName>
+      <stageName>Run smoke tests &amp; rollback scenario</stageName>
+    </se.diabol.jenkins.pipeline.PipelineProperty>
+  </properties>
+  <canRoam>true</canRoam>
+  <disabled>false</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <triggers class="vector"/>
+  <concurrentBuild>false</concurrentBuild>
+  <builders>
+    <hudson.plugins.groovy.SystemGroovy>
+      <bindings/>
+      <classpath/>
+      <scriptSource class="hudson.plugins.groovy.StringScriptSource">
+        <command>package io.fourfinanceit.pipeline
+
+import com.cloudbees.plugins.credentials.CredentialsProvider
+import com.cloudbees.plugins.credentials.common.StandardCredentials
+import com.google.common.base.Optional
+import com.google.common.collect.ImmutableList
+import hudson.model.ParametersAction
+import hudson.model.StringParameterValue
+import hudson.plugins.git.GitException
+import jenkins.model.Jenkins
+
+import static hudson.security.ACL.SYSTEM
+
+def getCredentials(String credentialsDescription) {
+    def jenkins = Jenkins.getInstance()
+    for (credentialsProvider in jenkins.getExtensionList(CredentialsProvider.class)) {
+        for (credentials in credentialsProvider.getCredentials(StandardCredentials.class, jenkins, SYSTEM)) {
+            if (credentials.getDescription() == credentialsDescription || credentials.getId() == credentialsDescription) {
+                return credentials;
+            }
+        }
+    }
+}
+
+def Optional&lt;String&gt; getNewestReleaseTag(Collection&lt;String&gt; tags, String tagPrefix) {
+    tagPrefix = "${tagPrefix}/"
+    def tagNames = tags.findAll { it.startsWith(tagPrefix) }
+            .collect { it.substring(tagPrefix.length()) }
+            .findAll { it.matches("\\d{8}-\\d{6}-\\w{7}") }
+    tagNames.sort(Collections.reverseOrder())
+    return tagNames.size() &gt; 0 ? Optional.of(tagNames.first()) : Optional.absent()
+}
+
+def project = build.getProject()
+def gitConfigs = project.scm.getUserRemoteConfigs()
+def gitUrl = gitConfigs.first().getUrl()
+def gitCredentials = gitConfigs.first().getCredentialsId()
+
+def gitClient = org.jenkinsci.plugins.gitclient.Git
+        .with(null, null)
+        .using("/usr/bin/git")
+        .getClient()
+
+gitClient.addCredentials(gitUrl, getCredentials(gitCredentials))
+
+final Collection&lt;String&gt; tags
+try {
+    tags = gitClient.getRemoteReferences(gitUrl, "*", false, true).keySet()
+} catch (GitException e) {
+    // catching this exception is necessary due to bug: JENKINS-30589
+    tags = ImmutableList.of()
+}
+
+//TODO: maybe we should extend the classpath and use a JenkinsVariable constant here
+def newestReleaseTag = getNewestReleaseTag(tags, build.getEnvironment(listener).get('MICROSERVICE_RELEASE_TAG_PREFIX'))
+
+println "release tag: $newestReleaseTag"
+
+// setting env variable
+// We have to set PREV_APP_VERSION parameter always, even when previous version does not exist
+// due to JENKINS-10779 issue.
+def pa = new ParametersAction([
+        new StringParameterValue('PREV_APP_VERSION', newestReleaseTag.or(''))
+])
+
+// add variable to current job
+Thread.currentThread().executable.addAction(pa)</command>
+      </scriptSource>
+    </hudson.plugins.groovy.SystemGroovy>
+  </builders>
+  <publishers>
+    <org.jvnet.hudson.plugins.groovypostbuild.GroovyPostbuildRecorder>
+      <script>
+        <script>
+if (!manager.getEnvVariable('PREV_APP_VERSION')) {
+    manager.addWarningBadge('No previous production version has been found. Skipping rollback test steps.')
+    manager.createSummary('warning.gif').appendText('&lt;h2&gt;No previous production version has been found. Skipping rollback test steps.&lt;/h2&gt;', false, false, false, 'orange')
+    manager.buildUnstable()
+}
+</script>
+        <sandbox>false</sandbox>
+      </script>
+      <behavior>2</behavior>
+    </org.jvnet.hudson.plugins.groovypostbuild.GroovyPostbuildRecorder>
+    <jenkins.plugins.slack.SlackNotifier/>
+    <hudson.plugins.parameterizedtrigger.BuildTrigger>
+      <configs>
+        <hudson.plugins.parameterizedtrigger.BuildTriggerConfig>
+          <projects>boot-microservice-deploy-previous-production-version-to-smoke-testing</projects>
+          <condition>UNSTABLE_OR_BETTER</condition>
+          <triggerWithNoParameters>true</triggerWithNoParameters>
+          <configs>
+            <hudson.plugins.parameterizedtrigger.NodeParameters/>
+            <hudson.plugins.parameterizedtrigger.CurrentBuildParameters/>
+            <hudson.plugins.parameterizedtrigger.PredefinedBuildParameters>
+              <properties>PREV_APP_VERSION=${PREV_APP_VERSION}</properties>
+            </hudson.plugins.parameterizedtrigger.PredefinedBuildParameters>
+          </configs>
+        </hudson.plugins.parameterizedtrigger.BuildTriggerConfig>
+      </configs>
+    </hudson.plugins.parameterizedtrigger.BuildTrigger>
+  </publishers>
+  <buildWrappers>
+    <se.diabol.jenkins.pipeline.PipelineVersionContributor>
+      <versionTemplate>${ENV,var="PIPELINE_VERSION"}</versionTemplate>
+      <updateDisplayName>true</updateDisplayName>
+    </se.diabol.jenkins.pipeline.PipelineVersionContributor>
+  </buildWrappers>
+  <scm class="hudson.plugins.git.GitSCM">
+    <userRemoteConfigs>
+      <hudson.plugins.git.UserRemoteConfig>
+        <name>origin</name>
+        <url>https://github.com/4finance/boot-microservice.git</url>
+      </hudson.plugins.git.UserRemoteConfig>
+    </userRemoteConfigs>
+    <branches>
+      <hudson.plugins.git.BranchSpec>
+        <name>master</name>
+      </hudson.plugins.git.BranchSpec>
+    </branches>
+    <configVersion>2</configVersion>
+    <disableSubmodules>false</disableSubmodules>
+    <recursiveSubmodules>false</recursiveSubmodules>
+    <doGenerateSubmoduleConfigurations>false</doGenerateSubmoduleConfigurations>
+    <authorOrCommitter>false</authorOrCommitter>
+    <clean>false</clean>
+    <wipeOutWorkspace>false</wipeOutWorkspace>
+    <pruneBranches>false</pruneBranches>
+    <remotePoll>false</remotePoll>
+    <ignoreNotifyCommit>false</ignoreNotifyCommit>
+    <gitTool>Default</gitTool>
+    <skipTag>true</skipTag>
+  </scm>
+</project>

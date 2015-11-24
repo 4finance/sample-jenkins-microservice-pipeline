@@ -1,0 +1,102 @@
+buildscript {
+    dependencies {
+        classpath 'commons-io:commons-io:2.4'
+    }
+    repositories {
+        mavenCentral()
+    }
+}
+
+import org.apache.commons.io.FileUtils
+
+import java.nio.file.Files
+import java.nio.file.attribute.PosixFilePermission
+
+repositories {
+    mavenLocal()
+    maven { url 'http://repo.jenkins-ci.org/releases/' }
+    jcenter()
+    mavenCentral()
+}
+
+configurations {
+    jenkinsWar
+    jenkinsPlugins
+}
+
+dependencies {
+    jenkinsWar(group: 'org.jenkins-ci.main', name: 'jenkins-war', version: project.ext.jenkinsVersion, ext: 'war')
+}
+apply from: 'plugins.gradle'
+
+defaultTasks 'prepareJenkins'
+
+task prepareJenkins << {
+    File jenkinsHome = prepareJenkinsHome()
+    File jenkinsWar = prepareJenkinsWar()
+    createRunJenkinsScript(jenkinsHome, jenkinsWar)
+}
+
+private File prepareJenkinsWar() {
+    def configuration = project.configurations.getByName('jenkinsWar')
+    def files = configuration.resolve()
+    def war = files.first()
+    war
+}
+
+private File prepareJenkinsHome() {
+    File jenkinsHome = getJenkinsHome()
+    createOrUpdateBaseConfig(jenkinsHome)
+    preparePluginsDir(jenkinsHome)
+    return jenkinsHome
+}
+
+private File getJenkinsHome() {
+    def jenkinsHome = new File(System.getProperty('user.home'), "${project.name}_jenkins_home")
+    if (project.hasProperty('localJenkinsHome')) {
+        jenkinsHome = new File(project.ext.localJenkinsHome)
+    }
+    return jenkinsHome
+}
+
+private createOrUpdateBaseConfig(File jenkinsHome) {
+    FileUtils.copyDirectory(new File('./jenkins-bootstrap/'), jenkinsHome.absoluteFile)
+}
+
+private void preparePluginsDir(File jenkinsHome) {
+    def pluginsDir = new File(jenkinsHome, 'plugins/')
+
+    // copied from gradle-jpi-plugin
+    // create new configuration with plugin dependencies, ignoring the (jar) extension to get the HPI/JPI files
+    Configuration plugins = project.configurations.create('plugins')
+    project.configurations.getByName('jenkinsPlugins').dependencies.each {
+        project.dependencies.add(plugins.name, "${it.group}:${it.name}:${it.version}")
+    }
+
+    // copy the resolved HPI/JPI files to the plugins directory
+    plugins.resolvedConfiguration.resolvedArtifacts.findAll { it.extension in ['hpi', 'jpi'] }.each {
+        GFileUtils.copyFile(it.file, new File(pluginsDir, "${it.name}.${it.extension}"))
+    }
+
+    // pin particular plugins
+    new File(pluginsDir.absolutePath + '/credentials.jpi.pinned').createNewFile()
+}
+
+private void createRunJenkinsScript(File jenkinsHome, File jenkinsWar) {
+    def dslProjectRoot = project.projectDir
+
+    def command = "java" +
+            " -DJENKINS_HOME=${jenkinsHome.absolutePath}" +
+            " -DDSL_PROJECT_ROOT=${dslProjectRoot.absolutePath}" +
+            " -jar ${jenkinsWar.absolutePath}" +
+            " --webroot=${jenkinsHome.absolutePath}/war" +
+            " --httpPort=8080"
+    def runJenkins = new File('runJenkins.sh')
+    runJenkins.text = command
+    Files.setPosixFilePermissions(runJenkins.toPath(), [
+            PosixFilePermission.OWNER_READ,
+            PosixFilePermission.OWNER_WRITE,
+            PosixFilePermission.OWNER_EXECUTE,
+    ] as Set)
+}
+

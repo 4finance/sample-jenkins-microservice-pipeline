@@ -1,0 +1,7 @@
+def gitRef = '%%DEFAULT_GIT_REF%%'
+
+if ("%%PREV_APP_VERSION_REF%%") {
+    gitRef = "%%RELEASE_TAG_PREFIX%%/%%PREV_APP_VERSION_REF%%"
+}
+
+return [%%GIT_CHECKOUT_REF_NAME%%: gitRef]

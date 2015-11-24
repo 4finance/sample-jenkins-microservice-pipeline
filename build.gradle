@@ -1,0 +1,71 @@
+apply plugin: 'groovy'
+
+sourceSets {
+    jobs {
+        groovy {
+            srcDirs 'jobs'
+        }
+    }
+}
+
+configurations {
+    jenkins
+    compile.extendsFrom(jenkins)
+    lib
+    compile.extendsFrom(lib)
+}
+
+repositories {
+    mavenLocal()
+    maven { url "https://jitpack.io" }
+    maven { url 'http://repo.jenkins-ci.org/releases/' }
+    jcenter()
+    mavenCentral()
+}
+
+dependencies {
+    //TODO use a proper version once published
+    lib 'com.github.4finance:jenkins-pipeline-dsl:b7a17b0'
+//    lib 'io.fourfinanceit.pipeline:jenkins-pipeline-dsl:0.3.0-SNAPSHOT'
+
+    jenkins "org.jenkins-ci.main:jenkins-core:${project.ext.jenkinsVersion}"
+
+    compile 'org.codehaus.groovy:groovy-all:2.4.4'
+    compile 'com.google.guava:guava:14.0'
+    lib "org.jenkins-ci.plugins:job-dsl:${project.ext.jobDslVersion}@jar"
+    lib "org.jenkins-ci.plugins:job-dsl-core:${project.ext.jobDslVersion}"
+
+    testCompile('org.spockframework:spock-core:1.0-groovy-2.4') {
+        exclude module: 'groovy-all'
+    }
+    testCompile 'xmlunit:xmlunit:1.6'
+}
+
+test {
+    testLogging {
+        exceptionFormat = 'full'
+    }
+}
+
+task cleanLibs(type: Delete) {
+    delete 'lib'
+}
+
+tasks.clean.dependsOn 'cleanLibs'
+
+task libs(type: Copy) {
+    into 'lib'
+    from configurations.lib
+}
+
+apply plugin: 'idea'
+
+idea {
+    module {
+        excludeDirs += file('lib')
+    }
+}
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '2.7'
+}

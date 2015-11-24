@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project>
+  <actions/>
+  <description/>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <EnvInjectJobProperty>
+      <info>
+        <groovyScriptContent>
+String buildDateTime = new Date().format("yyyyMMdd-HHmmss")
+return [
+BUILD_DATETIME: buildDateTime,
+PIPELINE_VERSION: "${BUILD_DISPLAY_NAME} ${buildDateTime}",
+]
+        </groovyScriptContent>
+        <loadFilesFromMaster>false</loadFilesFromMaster>
+      </info>
+      <on>true</on>
+      <keepJenkinsSystemVariables>true</keepJenkinsSystemVariables>
+      <keepBuildVariables>true</keepBuildVariables>
+      <overrideBuildParameters>false</overrideBuildParameters>
+      <contributors/>
+    </EnvInjectJobProperty>
+    <jenkins.plugins.slack.SlackNotifier_-SlackJobProperty>
+      <startNotification>true</startNotification>
+      <notifySuccess>true</notifySuccess>
+      <notifyAborted>true</notifyAborted>
+      <notifyNotBuilt>true</notifyNotBuilt>
+      <notifyUnstable>true</notifyUnstable>
+      <notifyFailure>true</notifyFailure>
+      <notifyBackToNormal>true</notifyBackToNormal>
+      <notifyRepeatedFailure>true</notifyRepeatedFailure>
+      <includeTestSummary>true</includeTestSummary>
+      <showCommitList>true</showCommitList>
+    </jenkins.plugins.slack.SlackNotifier_-SlackJobProperty>
+    <se.diabol.jenkins.pipeline.PipelineProperty>
+      <taskName>Build and publish</taskName>
+      <stageName>Build</stageName>
+    </se.diabol.jenkins.pipeline.PipelineProperty>
+  </properties>
+  <canRoam>true</canRoam>
+  <disabled>false</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <triggers class="vector">
+    <hudson.triggers.SCMTrigger>
+      <spec>H/5 * * * *</spec>
+      <ignorePostCommitHooks>false</ignorePostCommitHooks>
+    </hudson.triggers.SCMTrigger>
+  </triggers>
+  <concurrentBuild>false</concurrentBuild>
+  <builders>
+    <hudson.tasks.Shell>
+      <command>echo "GIT_COMMIT_SHORT=`echo ${GIT_COMMIT} | cut -c1-7`" &gt; jenkinsShortCommitHashHack.txt</command>
+    </hudson.tasks.Shell>
+    <EnvInjectBuilder>
+      <info>
+        <propertiesFilePath>jenkinsShortCommitHashHack.txt</propertiesFilePath>
+        <propertiesContent>APP_VERSION=${BUILD_DATETIME}-${GIT_COMMIT_SHORT}</propertiesContent>
+      </info>
+    </EnvInjectBuilder>
+    <hudson.tasks.Shell>
+      <command>cat &gt; adapt_gradle_build_for_microservice_pipeline.gradle &lt;&lt;- EOF
+package io.fourfinanceit.pipeline
+//make test failures not fail the build so that we can mark the build as unstable instead of failed
+allprojects {
+    afterEvaluate {
+        tasks.withType(Test) {
+            ignoreFailures = true
+        }
+    }
+}
+EOF</command>
+    </hudson.tasks.Shell>
+    <hudson.plugins.gradle.Gradle>
+      <description/>
+      <switches/>
+      <tasks>clean build --init-script adapt_gradle_build_for_microservice_pipeline.gradle --continue --stacktrace --parallel -Pproject.version=${APP_VERSION} -PbuildNr=${APP_VERSION}</tasks>
+      <rootBuildScriptDir/>
+      <buildFile/>
+      <gradleName>(Default)</gradleName>
+      <useWrapper>true</useWrapper>
+      <makeExecutable>false</makeExecutable>
+      <fromRootBuildScriptDir>true</fromRootBuildScriptDir>
+    </hudson.plugins.gradle.Gradle>
+    <org.jenkinsci.plugins.conditionalbuildstep.ConditionalBuilder>
+      <runCondition class="org.jenkins_ci.plugins.run_condition.core.StatusCondition">
+        <worstResult>
+          <ordinal>0</ordinal>
+        </worstResult>
+        <bestResult>
+          <ordinal>0</ordinal>
+        </bestResult>
+      </runCondition>
+      <runner class="org.jenkins_ci.plugins.run_condition.BuildStepRunner$Fail"/>
+      <conditionalbuilders>
+        <hudson.plugins.gradle.Gradle>
+          <description/>
+          <switches/>
+          <tasks>publish --stacktrace -Pproject.version=${APP_VERSION} -PbuildNr=${APP_VERSION}</tasks>
+          <rootBuildScriptDir/>
+          <buildFile/>
+          <gradleName>(Default)</gradleName>
+          <useWrapper>true</useWrapper>
+          <makeExecutable>false</makeExecutable>
+          <fromRootBuildScriptDir>true</fromRootBuildScriptDir>
+        </hudson.plugins.gradle.Gradle>
+      </conditionalbuilders>
+    </org.jenkinsci.plugins.conditionalbuildstep.ConditionalBuilder>
+  </builders>
+  <publishers>
+    <jenkins.plugins.slack.SlackNotifier/>
+    <hudson.plugins.parameterizedtrigger.BuildTrigger>
+      <configs>
+        <hudson.plugins.parameterizedtrigger.BuildTriggerConfig>
+          <projects>boot-microservice-deploy-stub-runner-to-smoke-testing</projects>
+          <condition>SUCCESS</condition>
+          <triggerWithNoParameters>true</triggerWithNoParameters>
+          <configs>
+            <hudson.plugins.parameterizedtrigger.NodeParameters/>
+            <hudson.plugins.parameterizedtrigger.CurrentBuildParameters/>
+            <hudson.plugins.parameterizedtrigger.PredefinedBuildParameters>
+              <properties>APP_VERSION=${APP_VERSION}
+GIT_COMMIT=${GIT_COMMIT}</properties>
+            </hudson.plugins.parameterizedtrigger.PredefinedBuildParameters>
+          </configs>
+        </hudson.plugins.parameterizedtrigger.BuildTriggerConfig>
+      </configs>
+    </hudson.plugins.parameterizedtrigger.BuildTrigger>
+  </publishers>
+  <buildWrappers>
+    <EnvInjectPasswordWrapper>
+      <injectGlobalPasswords>true</injectGlobalPasswords>
+      <passwordEntries/>
+      <maskPasswordParameters>true</maskPasswordParameters>
+    </EnvInjectPasswordWrapper>
+    <se.diabol.jenkins.pipeline.PipelineVersionContributor>
+      <versionTemplate>${ENV,var="PIPELINE_VERSION"}</versionTemplate>
+      <updateDisplayName>true</updateDisplayName>
+    </se.diabol.jenkins.pipeline.PipelineVersionContributor>
+  </buildWrappers>
+  <scm class="hudson.plugins.git.GitSCM">
+    <userRemoteConfigs>
+      <hudson.plugins.git.UserRemoteConfig>
+        <name>origin</name>
+        <url>https://github.com/4finance/boot-microservice.git</url>
+      </hudson.plugins.git.UserRemoteConfig>
+    </userRemoteConfigs>
+    <branches>
+      <hudson.plugins.git.BranchSpec>
+        <name>master</name>
+      </hudson.plugins.git.BranchSpec>
+    </branches>
+    <configVersion>2</configVersion>
+    <disableSubmodules>false</disableSubmodules>
+    <recursiveSubmodules>false</recursiveSubmodules>
+    <doGenerateSubmoduleConfigurations>false</doGenerateSubmoduleConfigurations>
+    <authorOrCommitter>false</authorOrCommitter>
+    <clean>false</clean>
+    <wipeOutWorkspace>false</wipeOutWorkspace>
+    <pruneBranches>false</pruneBranches>
+    <remotePoll>false</remotePoll>
+    <ignoreNotifyCommit>false</ignoreNotifyCommit>
+    <gitTool>Default</gitTool>
+    <skipTag>true</skipTag>
+  </scm>
+</project>
