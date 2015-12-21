@@ -61,7 +61,6 @@ PIPELINE_VERSION: "${BUILD_DISPLAY_NAME} ${buildDateTime}",
     </EnvInjectBuilder>
     <hudson.tasks.Shell>
       <command>cat &gt; adapt_gradle_build_for_microservice_pipeline.gradle &lt;&lt;- EOF
-package io.fourfinanceit.pipeline
 //make test failures not fail the build so that we can mark the build as unstable instead of failed
 allprojects {
     afterEvaluate {
