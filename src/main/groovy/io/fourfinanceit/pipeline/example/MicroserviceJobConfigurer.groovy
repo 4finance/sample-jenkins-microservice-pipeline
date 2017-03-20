@@ -1,5 +1,6 @@
 package io.fourfinanceit.pipeline.example
 
+import com.ofg.pipeline.core.JenkinsVariables
 import com.ofg.pipeline.core.JobConfigurer
 import javaposse.jobdsl.dsl.Job
 
@@ -8,13 +9,14 @@ import javaposse.jobdsl.dsl.Job
  * @author Marek Kapowicki
  */
 class MicroserviceJobConfigurer implements JobConfigurer<MicroserviceProject> {
+
     @Override
-    void preConfigure(Job job, MicroserviceProject microserviceProject) {
+    void preConfigure(Job job, MicroserviceProject project, JenkinsVariables jenkinsVariables) {
 
     }
 
     @Override
-    void postConfigure(Job job, MicroserviceProject microserviceProject) {
+    void postConfigure(Job job, MicroserviceProject project, JenkinsVariables jenkinsVariables) {
         job.with {
             configure { Node rootProject ->
                 appendSlackNotification(rootProject)

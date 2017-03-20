@@ -26,7 +26,7 @@
   <disabled>false</disabled>
   <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
   <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
-  <triggers class="vector"/>
+  <triggers/>
   <concurrentBuild>false</concurrentBuild>
   <builders/>
   <publishers>
@@ -46,32 +46,44 @@ app_version=${APP_VERSION}</options>
     <org.jenkins__ci.plugins.flexible__publish.FlexiblePublisher>
       <publishers>
         <org.jenkins__ci.plugins.flexible__publish.ConditionalPublisher>
-          <condition class="org.jenkins_ci.plugins.run_condition.contributed.ShellCondition">
-            <command>[ ! "${SKIP_TEAM_NOTIFICATIONS}" = true ]</command>
-          </condition>
           <publisherList>
             <hudson.plugins.emailext.ExtendedEmailPublisher>
               <recipientList>$DEFAULT_RECIPIENTS</recipientList>
-              <contentType>default</contentType>
-              <defaultSubject>$DEFAULT_SUBJECT</defaultSubject>
-              <defaultContent>$DEFAULT_CONTENT</defaultContent>
-              <attachmentsPattern/>
               <configuredTriggers>
                 <hudson.plugins.emailext.plugins.trigger.SuccessTrigger>
                   <email>
                     <recipientList/>
                     <subject>boot-microservice current version ${APP_VERSION} successfully deployed to prod</subject>
                     <body>$PROJECT_DEFAULT_CONTENT</body>
-                    <sendToDevelopers>false</sendToDevelopers>
-                    <sendToRequester>true</sendToRequester>
-                    <includeCulprits>false</includeCulprits>
-                    <sendToRecipientList>true</sendToRecipientList>
+                    <recipientProviders>
+                      <hudson.plugins.emailext.plugins.recipients.RequesterRecipientProvider/>
+                      <hudson.plugins.emailext.plugins.recipients.ListRecipientProvider/>
+                    </recipientProviders>
+                    <attachmentsPattern/>
+                    <attachBuildLog>false</attachBuildLog>
+                    <compressBuildLog>false</compressBuildLog>
+                    <replyTo>$PROJECT_DEFAULT_REPLYTO</replyTo>
+                    <contentType>project</contentType>
                   </email>
                 </hudson.plugins.emailext.plugins.trigger.SuccessTrigger>
               </configuredTriggers>
+              <contentType>default</contentType>
+              <defaultSubject>$DEFAULT_SUBJECT</defaultSubject>
+              <defaultContent>$DEFAULT_CONTENT</defaultContent>
+              <attachmentsPattern/>
+              <presendScript>$DEFAULT_PRESEND_SCRIPT</presendScript>
+              <classpath/>
+              <attachBuildLog>false</attachBuildLog>
+              <compressBuildLog>false</compressBuildLog>
+              <replyTo>$DEFAULT_REPLYTO</replyTo>
+              <saveOutput>false</saveOutput>
+              <disabled>false</disabled>
             </hudson.plugins.emailext.ExtendedEmailPublisher>
           </publisherList>
           <runner class="org.jenkins_ci.plugins.run_condition.BuildStepRunner$Fail"/>
+          <condition class="org.jenkins_ci.plugins.run_condition.contributed.ShellCondition">
+            <command>[ ! "${SKIP_TEAM_NOTIFICATIONS}" = true ]</command>
+          </condition>
         </org.jenkins__ci.plugins.flexible__publish.ConditionalPublisher>
       </publishers>
     </org.jenkins__ci.plugins.flexible__publish.FlexiblePublisher>
@@ -83,7 +95,6 @@ app_version=${APP_VERSION}</options>
           <condition>SUCCESS</condition>
           <triggerWithNoParameters>true</triggerWithNoParameters>
           <configs>
-            <hudson.plugins.parameterizedtrigger.NodeParameters/>
             <hudson.plugins.parameterizedtrigger.CurrentBuildParameters/>
           </configs>
         </hudson.plugins.parameterizedtrigger.BuildTriggerConfig>
@@ -96,7 +107,6 @@ app_version=${APP_VERSION}</options>
           <condition>UNSTABLE_OR_WORSE</condition>
           <triggerWithNoParameters>true</triggerWithNoParameters>
           <configs>
-            <hudson.plugins.parameterizedtrigger.NodeParameters/>
             <hudson.plugins.parameterizedtrigger.CurrentBuildParameters/>
           </configs>
         </hudson.plugins.parameterizedtrigger.BuildTriggerConfig>

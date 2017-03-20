@@ -42,13 +42,10 @@ return [GIT_CHECKOUT_REF: gitRef]</groovyScriptContent>
   <disabled>false</disabled>
   <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
   <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
-  <triggers class="vector"/>
+  <triggers/>
   <concurrentBuild>false</concurrentBuild>
   <builders>
     <org.jenkinsci.plugins.conditionalbuildstep.ConditionalBuilder>
-      <runCondition class="org.jenkins_ci.plugins.run_condition.contributed.ShellCondition">
-        <command>[ ! -z "${PREV_APP_VERSION}" ]</command>
-      </runCondition>
       <runner class="org.jenkins_ci.plugins.run_condition.BuildStepRunner$Fail"/>
       <conditionalbuilders>
         <hudson.plugins.gradle.Gradle>
@@ -61,25 +58,31 @@ return [GIT_CHECKOUT_REF: gitRef]</groovyScriptContent>
           <useWrapper>true</useWrapper>
           <makeExecutable>false</makeExecutable>
           <fromRootBuildScriptDir>true</fromRootBuildScriptDir>
+          <useWorkspaceAsHome>false</useWorkspaceAsHome>
         </hudson.plugins.gradle.Gradle>
       </conditionalbuilders>
+      <runCondition class="org.jenkins_ci.plugins.run_condition.contributed.ShellCondition">
+        <command>[ ! -z "${PREV_APP_VERSION}" ]</command>
+      </runCondition>
     </org.jenkinsci.plugins.conditionalbuildstep.ConditionalBuilder>
   </builders>
   <publishers>
     <org.jenkins__ci.plugins.flexible__publish.FlexiblePublisher>
       <publishers>
         <org.jenkins__ci.plugins.flexible__publish.ConditionalPublisher>
-          <condition class="org.jenkins_ci.plugins.run_condition.contributed.ShellCondition">
-            <command>[ ! -z "${PREV_APP_VERSION}" ]</command>
-          </condition>
           <publisherList>
             <hudson.tasks.junit.JUnitResultArchiver>
               <testResults>**/build/test-results/**/*.xml</testResults>
               <keepLongStdio>false</keepLongStdio>
               <testDataPublishers/>
+              <allowEmptyResults>false</allowEmptyResults>
+              <healthScaleFactor>1.0</healthScaleFactor>
             </hudson.tasks.junit.JUnitResultArchiver>
           </publisherList>
           <runner class="org.jenkins_ci.plugins.run_condition.BuildStepRunner$Fail"/>
+          <condition class="org.jenkins_ci.plugins.run_condition.contributed.ShellCondition">
+            <command>[ ! -z "${PREV_APP_VERSION}" ]</command>
+          </condition>
         </org.jenkins__ci.plugins.flexible__publish.ConditionalPublisher>
       </publishers>
     </org.jenkins__ci.plugins.flexible__publish.FlexiblePublisher>
@@ -87,7 +90,6 @@ return [GIT_CHECKOUT_REF: gitRef]</groovyScriptContent>
     <au.com.centrumsystems.hudson.plugin.buildpipeline.trigger.BuildPipelineTrigger>
       <downstreamProjectNames>boot-microservice-deploy-current-version-to-production</downstreamProjectNames>
       <configs>
-        <hudson.plugins.parameterizedtrigger.NodeParameters/>
         <hudson.plugins.parameterizedtrigger.CurrentBuildParameters/>
       </configs>
     </au.com.centrumsystems.hudson.plugin.buildpipeline.trigger.BuildPipelineTrigger>
@@ -111,16 +113,7 @@ return [GIT_CHECKOUT_REF: gitRef]</groovyScriptContent>
       </hudson.plugins.git.BranchSpec>
     </branches>
     <configVersion>2</configVersion>
-    <disableSubmodules>false</disableSubmodules>
-    <recursiveSubmodules>false</recursiveSubmodules>
     <doGenerateSubmoduleConfigurations>false</doGenerateSubmoduleConfigurations>
-    <authorOrCommitter>false</authorOrCommitter>
-    <clean>false</clean>
-    <wipeOutWorkspace>false</wipeOutWorkspace>
-    <pruneBranches>false</pruneBranches>
-    <remotePoll>false</remotePoll>
-    <ignoreNotifyCommit>false</ignoreNotifyCommit>
     <gitTool>Default</gitTool>
-    <skipTag>true</skipTag>
   </scm>
 </project>

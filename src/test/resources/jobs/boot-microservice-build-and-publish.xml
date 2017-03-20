@@ -42,7 +42,7 @@ PIPELINE_VERSION: "${BUILD_DISPLAY_NAME} ${buildDateTime}",
   <disabled>false</disabled>
   <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
   <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
-  <triggers class="vector">
+  <triggers>
     <hudson.triggers.SCMTrigger>
       <spec>H/5 * * * *</spec>
       <ignorePostCommitHooks>false</ignorePostCommitHooks>
@@ -81,16 +81,9 @@ EOF</command>
       <useWrapper>true</useWrapper>
       <makeExecutable>false</makeExecutable>
       <fromRootBuildScriptDir>true</fromRootBuildScriptDir>
+      <useWorkspaceAsHome>false</useWorkspaceAsHome>
     </hudson.plugins.gradle.Gradle>
     <org.jenkinsci.plugins.conditionalbuildstep.ConditionalBuilder>
-      <runCondition class="org.jenkins_ci.plugins.run_condition.core.StatusCondition">
-        <worstResult>
-          <ordinal>0</ordinal>
-        </worstResult>
-        <bestResult>
-          <ordinal>0</ordinal>
-        </bestResult>
-      </runCondition>
       <runner class="org.jenkins_ci.plugins.run_condition.BuildStepRunner$Fail"/>
       <conditionalbuilders>
         <hudson.plugins.gradle.Gradle>
@@ -103,8 +96,17 @@ EOF</command>
           <useWrapper>true</useWrapper>
           <makeExecutable>false</makeExecutable>
           <fromRootBuildScriptDir>true</fromRootBuildScriptDir>
+          <useWorkspaceAsHome>false</useWorkspaceAsHome>
         </hudson.plugins.gradle.Gradle>
       </conditionalbuilders>
+      <runCondition class="org.jenkins_ci.plugins.run_condition.core.StatusCondition">
+        <worstResult>
+          <ordinal>0</ordinal>
+        </worstResult>
+        <bestResult>
+          <ordinal>0</ordinal>
+        </bestResult>
+      </runCondition>
     </org.jenkinsci.plugins.conditionalbuildstep.ConditionalBuilder>
   </builders>
   <publishers>
@@ -116,7 +118,6 @@ EOF</command>
           <condition>SUCCESS</condition>
           <triggerWithNoParameters>true</triggerWithNoParameters>
           <configs>
-            <hudson.plugins.parameterizedtrigger.NodeParameters/>
             <hudson.plugins.parameterizedtrigger.CurrentBuildParameters/>
             <hudson.plugins.parameterizedtrigger.PredefinedBuildParameters>
               <properties>APP_VERSION=${APP_VERSION}
@@ -151,16 +152,7 @@ GIT_COMMIT=${GIT_COMMIT}</properties>
       </hudson.plugins.git.BranchSpec>
     </branches>
     <configVersion>2</configVersion>
-    <disableSubmodules>false</disableSubmodules>
-    <recursiveSubmodules>false</recursiveSubmodules>
     <doGenerateSubmoduleConfigurations>false</doGenerateSubmoduleConfigurations>
-    <authorOrCommitter>false</authorOrCommitter>
-    <clean>false</clean>
-    <wipeOutWorkspace>false</wipeOutWorkspace>
-    <pruneBranches>false</pruneBranches>
-    <remotePoll>false</remotePoll>
-    <ignoreNotifyCommit>false</ignoreNotifyCommit>
     <gitTool>Default</gitTool>
-    <skipTag>true</skipTag>
   </scm>
 </project>

@@ -59,8 +59,10 @@ class RunSmokeTestsIfVersionExists extends AbstractRunSmokeTests {
         job.with {
             publishers {
                 flexiblePublish {
-                    condition versionReferenceIsNotEmpty()
-                    publisher archiveJunitTestResults()
+                    conditionalAction {
+                        condition versionReferenceIsNotEmpty()
+                        publishers archiveJunitTestResults()
+                    }
                 }
             }
         }

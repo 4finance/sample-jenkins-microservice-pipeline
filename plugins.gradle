@@ -1,27 +1,52 @@
 dependencies {
-    jenkinsPlugins "org.jenkins-ci.plugins:job-dsl:${project.ext.jobDslVersion}@jar"
-    jenkinsPlugins "org.jenkins-ci.plugins:any-buildstep:+@jar"
-    jenkinsPlugins "org.jenkins-ci.plugins:conditional-buildstep:+@jar"
-    jenkinsPlugins 'org.jenkins-ci.plugins:flexible-publish:+@jar'
-    jenkinsPlugins 'org.jenkins-ci.plugins:envinject:+@jar'
-    jenkinsPlugins 'org.jenkins-ci.plugins:jobConfigHistory:+@jar'
-    jenkinsPlugins 'org.jenkins-ci.plugins:nested-view:+@jar'
-
-    jenkinsPlugins 'jp.ikedam.jenkins.plugins:extensible-choice-parameter:+@jar'
-    jenkinsPlugins 'org.jenkins-ci.plugins:build-pipeline-plugin:+@jar'
-    jenkinsPlugins 'se.diabol.jenkins.pipeline:delivery-pipeline-plugin:+@jar'
-    jenkinsPlugins 'org.jvnet.hudson.plugins:downstream-buildview:+@jar'
-    jenkinsPlugins 'com.sonyericsson.hudson.plugins.rebuild:rebuild:+@jar'
-
+    jenkinsPlugins 'org.jenkins-ci.plugins:credentials:+@jar'
+    jenkinsPlugins 'org.jenkins-ci.plugins:credentials-binding:+@jar'
+    jenkinsPlugins 'org.jenkins-ci.plugins:plain-credentials:+@jar'
+    jenkinsPlugins 'org.jenkins-ci.plugins:mask-passwords:+@jar'
     jenkinsPlugins 'org.jenkins-ci.plugins:greenballs:+@jar'
-    jenkinsPlugins 'org.jenkins-ci.plugins:timestamper:+@jar'
+    jenkinsPlugins 'org.jenkins-ci.plugins:build-name-setter:+@jar'
+    jenkinsPlugins 'org.jenkins-ci.plugins:build-pipeline-plugin:+@jar'
+    jenkinsPlugins 'org.jenkins-ci.plugins:compact-columns:+@jar'
+    jenkinsPlugins 'org.jenkins-ci.plugins:dashboard-view:+@jar'
     jenkinsPlugins 'org.jenkins-ci.plugins:email-ext:+@jar'
-
-    jenkinsPlugins 'org.jenkins-ci.plugins:JDK_Parameter_Plugin:+@jar'
+    jenkinsPlugins 'org.jenkins-ci.plugins:envinject:+@jar'
+    jenkinsPlugins 'org.jenkins-ci.plugins:extra-columns:+@jar'
+    jenkinsPlugins 'org.jenkins-ci.plugins:ghprb:+@jar'
     jenkinsPlugins 'org.jenkins-ci.plugins:git:+@jar'
-    jenkinsPlugins 'com.coravy.hudson.plugins.github:github:+@jar'
+    jenkinsPlugins 'org.jenkins-ci.plugins:git-parameter:+@jar'
+    jenkinsPlugins 'org.jenkins-ci.plugins:global-build-stats:+@jar'
     jenkinsPlugins 'org.jenkins-ci.plugins:gradle:+@jar'
     jenkinsPlugins 'org.jenkins-ci.plugins:groovy:+@jar'
+    jenkinsPlugins 'org.jenkins-ci.plugins:JDK_Parameter_Plugin:+@jar'
+    jenkinsPlugins 'org.jenkins-ci.plugins:jobConfigHistory:+@jar'
+    jenkinsPlugins "org.jenkins-ci.plugins:job-dsl:${project.ext.jobDslVersion}@jar"
+    jenkinsPlugins 'org.jenkins-ci.plugins:nested-view:+@jar'
     jenkinsPlugins 'org.jenkins-ci.plugins:parameterized-trigger:+@jar'
+    jenkinsPlugins 'org.jenkins-ci.plugins:repository-connector:+@jar'
     jenkinsPlugins 'org.jenkins-ci.plugins:rundeck:+@jar'
+    jenkinsPlugins 'org.jenkins-ci.plugins:sonar:+@jar'
+    jenkinsPlugins 'org.jenkins-ci.plugins:ssh:+@jar'
+    jenkinsPlugins 'org.jenkins-ci.plugins:stashNotifier:+@jar'
+    jenkinsPlugins 'org.jenkins-ci.plugins:stash-pullrequest-builder:+@jar'
+    jenkinsPlugins 'org.jenkins-ci.plugins:timestamper:+@jar'
+    jenkinsPlugins 'org.jenkins-ci.plugins:jenkins-multijob-plugin:+@jar'
+    jenkinsPlugins 'org.jenkins-ci.plugins:build-monitor-plugin:+@jar'
+    jenkinsPlugins 'org.jenkins-ci.plugins:flexible-publish:+@jar'
+    jenkinsPlugins 'org.jenkins-ci.plugins:next-build-number:+@jar'
+    jenkinsPlugins 'com.cloudbees.plugins:build-flow-plugin:+@jar'
+    jenkinsPlugins 'se.diabol.jenkins.pipeline:delivery-pipeline-plugin:+@jar'
+    jenkinsPlugins 'org.jvnet.hudson.plugins:downstream-buildview:+@jar'
+    jenkinsPlugins 'jp.ikedam.jenkins.plugins:extensible-choice-parameter:+@jar'
+    jenkinsPlugins 'org.jvnet.hudson.plugins:groovy-postbuild:+@jar'
+    jenkinsPlugins 'com.sonyericsson.hudson.plugins.rebuild:rebuild:+@jar'
+    jenkinsPlugins 'com.coravy.hudson.plugins.github:github:+@jar'
+    jenkinsPlugins "org.jenkins-ci.plugins:any-buildstep:+@jar"
+    jenkinsPlugins "org.jenkins-ci.plugins:conditional-buildstep:+@jar"
+    jenkinsPlugins "org.jvnet.hudson.plugins:checkstyle:+@jar"
+    jenkinsPlugins "org.jenkins-ci.plugins:build-user-vars-plugin:+@jar"
+    jenkinsPlugins "org.jenkins-ci.plugins:github-branch-source:+@jar"
+    jenkinsPlugins "org.jenkins-ci.plugins:junit:+@jar"
+    jenkinsPlugins "org.jenkins-ci.plugins:throttle-concurrents:+@jar"
+    jenkinsPlugins "org.jenkins-ci.plugins:ansicolor:+@jar"
+    jenkinsPlugins "org.jenkins-ci.plugins.workflow:workflow-multibranch:+@jar"
 }
