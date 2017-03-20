@@ -39,6 +39,10 @@ dependencies {
         exclude module: 'groovy-all'
     }
     testCompile 'xmlunit:xmlunit:1.6'
+
+    jobsCompile sourceSets.main.output
+    jobsCompile configurations.compile
+    jobsRuntime configurations.runtime
 }
 
 test {
