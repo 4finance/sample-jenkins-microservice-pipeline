@@ -81,7 +81,7 @@ class BuildAndPublish extends MicroserviceJobDefinition {
     }
 
     private String projectVersionParameters() {
-        /-Pproject.version=${APP_VERSION.reference} -PbuildNr=${APP_VERSION.reference}/
+        /-PcurrentVersion=${APP_VERSION.reference}/
     }
 
     private void addArchiveJunitAsBuildStep(Job job) {
