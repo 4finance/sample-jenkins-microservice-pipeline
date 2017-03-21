@@ -26,16 +26,13 @@
   <disabled>false</disabled>
   <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
   <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
-  <triggers class="vector"/>
+  <triggers/>
   <concurrentBuild>false</concurrentBuild>
   <builders/>
   <publishers>
     <org.jenkins__ci.plugins.flexible__publish.FlexiblePublisher>
       <publishers>
         <org.jenkins__ci.plugins.flexible__publish.ConditionalPublisher>
-          <condition class="org.jenkins_ci.plugins.run_condition.contributed.ShellCondition">
-            <command>[ ! -z "${PREV_APP_VERSION}" ]</command>
-          </condition>
           <publisherList>
             <org.jenkinsci.plugins.rundeck.RundeckNotifier>
               <jobId>deploy:deploy</jobId>
@@ -52,12 +49,50 @@ app_version=${PREV_APP_VERSION}</options>
             </org.jenkinsci.plugins.rundeck.RundeckNotifier>
           </publisherList>
           <runner class="org.jenkins_ci.plugins.run_condition.BuildStepRunner$Fail"/>
+          <condition class="org.jenkins_ci.plugins.run_condition.contributed.ShellCondition">
+            <command>[ ! -z "${PREV_APP_VERSION}" ]</command>
+          </condition>
         </org.jenkins__ci.plugins.flexible__publish.ConditionalPublisher>
       </publishers>
     </org.jenkins__ci.plugins.flexible__publish.FlexiblePublisher>
     <org.jenkins__ci.plugins.flexible__publish.FlexiblePublisher>
       <publishers>
         <org.jenkins__ci.plugins.flexible__publish.ConditionalPublisher>
+          <publisherList>
+            <hudson.plugins.emailext.ExtendedEmailPublisher>
+              <recipientList>$DEFAULT_RECIPIENTS</recipientList>
+              <configuredTriggers>
+                <hudson.plugins.emailext.plugins.trigger.SuccessTrigger>
+                  <email>
+                    <recipientList/>
+                    <subject>boot-microservice previous production version ${PREV_APP_VERSION} successfully deployed to prod</subject>
+                    <body>$PROJECT_DEFAULT_CONTENT</body>
+                    <recipientProviders>
+                      <hudson.plugins.emailext.plugins.recipients.RequesterRecipientProvider/>
+                      <hudson.plugins.emailext.plugins.recipients.ListRecipientProvider/>
+                    </recipientProviders>
+                    <attachmentsPattern/>
+                    <attachBuildLog>false</attachBuildLog>
+                    <compressBuildLog>false</compressBuildLog>
+                    <replyTo>$PROJECT_DEFAULT_REPLYTO</replyTo>
+                    <contentType>project</contentType>
+                  </email>
+                </hudson.plugins.emailext.plugins.trigger.SuccessTrigger>
+              </configuredTriggers>
+              <contentType>default</contentType>
+              <defaultSubject>$DEFAULT_SUBJECT</defaultSubject>
+              <defaultContent>$DEFAULT_CONTENT</defaultContent>
+              <attachmentsPattern/>
+              <presendScript>$DEFAULT_PRESEND_SCRIPT</presendScript>
+              <classpath/>
+              <attachBuildLog>false</attachBuildLog>
+              <compressBuildLog>false</compressBuildLog>
+              <replyTo>$DEFAULT_REPLYTO</replyTo>
+              <saveOutput>false</saveOutput>
+              <disabled>false</disabled>
+            </hudson.plugins.emailext.ExtendedEmailPublisher>
+          </publisherList>
+          <runner class="org.jenkins_ci.plugins.run_condition.BuildStepRunner$Fail"/>
           <condition class="org.jenkins_ci.plugins.run_condition.logic.And">
             <conditions>
               <org.jenkins__ci.plugins.run__condition.logic.ConditionContainer>
@@ -72,29 +107,6 @@ app_version=${PREV_APP_VERSION}</options>
               </org.jenkins__ci.plugins.run__condition.logic.ConditionContainer>
             </conditions>
           </condition>
-          <publisherList>
-            <hudson.plugins.emailext.ExtendedEmailPublisher>
-              <recipientList>$DEFAULT_RECIPIENTS</recipientList>
-              <contentType>default</contentType>
-              <defaultSubject>$DEFAULT_SUBJECT</defaultSubject>
-              <defaultContent>$DEFAULT_CONTENT</defaultContent>
-              <attachmentsPattern/>
-              <configuredTriggers>
-                <hudson.plugins.emailext.plugins.trigger.SuccessTrigger>
-                  <email>
-                    <recipientList/>
-                    <subject>boot-microservice previous production version ${PREV_APP_VERSION} successfully deployed to prod</subject>
-                    <body>$PROJECT_DEFAULT_CONTENT</body>
-                    <sendToDevelopers>false</sendToDevelopers>
-                    <sendToRequester>true</sendToRequester>
-                    <includeCulprits>false</includeCulprits>
-                    <sendToRecipientList>true</sendToRecipientList>
-                  </email>
-                </hudson.plugins.emailext.plugins.trigger.SuccessTrigger>
-              </configuredTriggers>
-            </hudson.plugins.emailext.ExtendedEmailPublisher>
-          </publisherList>
-          <runner class="org.jenkins_ci.plugins.run_condition.BuildStepRunner$Fail"/>
         </org.jenkins__ci.plugins.flexible__publish.ConditionalPublisher>
       </publishers>
     </org.jenkins__ci.plugins.flexible__publish.FlexiblePublisher>

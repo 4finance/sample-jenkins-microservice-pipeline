@@ -83,10 +83,12 @@ class DeployVersionToEnvironment extends MicroserviceJobDefinition {
             if (checkIfVersionExists) {
                 publishers {
                     flexiblePublish {
-                        condition {
-                            shell("[ ! -z \"${version.jenkinsVariable.reference}\" ]")
+                        conditionalAction {
+                            condition {
+                                shell("[ ! -z \"${version.jenkinsVariable.reference}\" ]")
+                            }
+                            publishers rundeckDeploy(project)
                         }
-                        publisher rundeckDeploy(project)
                     }
                 }
             } else {
@@ -111,13 +113,25 @@ class DeployVersionToEnvironment extends MicroserviceJobDefinition {
             job.with {
                 publishers {
                     flexiblePublish {
-                        condition sendTeamNotificationCondition()
-                        publisher {
-                            String additionalRecipients = project.notificationEmails.join(', ')
-                            extendedEmail(additionalRecipients ?: null) {
-                                // TODO: subject, body
-                                trigger(triggerName: 'Success', sendToRequester: true,
-                                        subject: notificationMessageSubject(project))
+                        conditionalAction {
+                            condition sendTeamNotificationCondition()
+                            publishers {
+                                String additionalRecipients = project.notificationEmails.join(', ')
+
+                                extendedEmail {
+                                    if (additionalRecipients) {
+                                        recipientList additionalRecipients
+                                    }
+                                    triggers {
+                                        success {
+                                            subject notificationMessageSubject(project)
+                                            sendTo {
+                                                requester()
+                                                recipientList()
+                                            }
+                                        }
+                                    }
+                                }
                             }
                         }
                     }

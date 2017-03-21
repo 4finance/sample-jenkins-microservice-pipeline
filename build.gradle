@@ -24,9 +24,7 @@ repositories {
 }
 
 dependencies {
-    //TODO use a proper version once published
-    lib 'com.github.4finance:jenkins-pipeline-dsl:b7a17b0'
-//    lib 'io.fourfinanceit.pipeline:jenkins-pipeline-dsl:0.3.0-SNAPSHOT'
+    lib 'io.fourfinanceit.pipeline:jenkins-pipeline-dsl:0.4.9'
 
     jenkins "org.jenkins-ci.main:jenkins-core:${project.ext.jenkinsVersion}"
 
@@ -39,6 +37,10 @@ dependencies {
         exclude module: 'groovy-all'
     }
     testCompile 'xmlunit:xmlunit:1.6'
+
+    jobsCompile sourceSets.main.output
+    jobsCompile configurations.compile
+    jobsRuntime configurations.runtime
 }
 
 test {

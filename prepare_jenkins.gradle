@@ -1,6 +1,7 @@
 buildscript {
     dependencies {
         classpath 'commons-io:commons-io:2.4'
+        classpath 'commons-lang:commons-lang:2.6'
     }
     repositories {
         mavenCentral()
@@ -8,6 +9,7 @@ buildscript {
 }
 
 import org.apache.commons.io.FileUtils
+import org.apache.commons.lang.SystemUtils
 
 import java.nio.file.Files
 import java.nio.file.attribute.PosixFilePermission
@@ -31,7 +33,7 @@ apply from: 'plugins.gradle'
 
 defaultTasks 'prepareJenkins'
 
-task prepareJenkins << {
+task(prepareJenkins).doLast {
     File jenkinsHome = prepareJenkinsHome()
     File jenkinsWar = prepareJenkinsWar()
     createRunJenkinsScript(jenkinsHome, jenkinsWar)
@@ -41,7 +43,7 @@ private File prepareJenkinsWar() {
     def configuration = project.configurations.getByName('jenkinsWar')
     def files = configuration.resolve()
     def war = files.first()
-    war
+    return war
 }
 
 private File prepareJenkinsHome() {
@@ -59,7 +61,7 @@ private File getJenkinsHome() {
     return jenkinsHome
 }
 
-private createOrUpdateBaseConfig(File jenkinsHome) {
+private void createOrUpdateBaseConfig(File jenkinsHome) {
     FileUtils.copyDirectory(new File('./jenkins-bootstrap/'), jenkinsHome.absoluteFile)
 }
 
@@ -84,19 +86,28 @@ private void preparePluginsDir(File jenkinsHome) {
 
 private void createRunJenkinsScript(File jenkinsHome, File jenkinsWar) {
     def dslProjectRoot = project.projectDir
+    def javaParameters = " -DJENKINS_HOME=${jenkinsHome.absolutePath}" +
+        " -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005" +
+        " -Dhudson.model.ParametersAction.keepUndefinedParameters=true" +
+        " -DDSL_PROJECT_ROOT=${dslProjectRoot.absolutePath}" +
+        " -jar ${jenkinsWar.absolutePath}" + " --webroot=${jenkinsHome.absolutePath}/war" +
+        " --httpPort=8080"
 
-    def command = "java" +
-            " -DJENKINS_HOME=${jenkinsHome.absolutePath}" +
-            " -DDSL_PROJECT_ROOT=${dslProjectRoot.absolutePath}" +
-            " -jar ${jenkinsWar.absolutePath}" +
-            " --webroot=${jenkinsHome.absolutePath}/war" +
-            " --httpPort=8080"
-    def runJenkins = new File('runJenkins.sh')
-    runJenkins.text = command
-    Files.setPosixFilePermissions(runJenkins.toPath(), [
-            PosixFilePermission.OWNER_READ,
-            PosixFilePermission.OWNER_WRITE,
-            PosixFilePermission.OWNER_EXECUTE,
-    ] as Set)
+    createScript('runJenkins', """\
+        #!/bin/sh
+        cd ${jenkinsHome.absolutePath};
+        java ${javaParameters}
+    """.stripIndent())
+}
+
+private void createScript(String filename, String scriptText) {
+    def extension = SystemUtils.IS_OS_WINDOWS ? '.bat' : '.sh'
+    def scriptFile = new File(filename + extension)
+    scriptFile.text = scriptText
+    if (SystemUtils.IS_OS_UNIX) {
+        Files.setPosixFilePermissions(scriptFile.toPath(), [PosixFilePermission.OWNER_READ,
+                                                            PosixFilePermission.OWNER_WRITE,
+                                                            PosixFilePermission.OWNER_EXECUTE,] as Set)
+    }
 }
 

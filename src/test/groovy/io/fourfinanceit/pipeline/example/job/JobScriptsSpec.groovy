@@ -27,13 +27,11 @@ class JobScriptsSpec extends Specification {
                     COUNTRY: "pl",
                     BUILD_PHRASE: "testX"
             ]
-
+            DslScriptLoader loader = new DslScriptLoader(jm)
         when:
-            DslScriptLoader.runDslEngine file.text, jm
-
+            loader.runScript(file.text)
         then:
             noExceptionThrown()
-
         where:
             file << jobFiles
     }
