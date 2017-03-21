@@ -49,4 +49,8 @@ dependencies {
     jenkinsPlugins "org.jenkins-ci.plugins:throttle-concurrents:+@jar"
     jenkinsPlugins "org.jenkins-ci.plugins:ansicolor:+@jar"
     jenkinsPlugins "org.jenkins-ci.plugins.workflow:workflow-multibranch:+@jar"
+    //Those below are not used directly, but newer versions are required to satisfy dependencies of other plugins
+    jenkinsPlugins "org.jenkins-ci.plugins.workflow:workflow-api:+@jar"
+    jenkinsPlugins "org.jenkins-ci.plugins.workflow:workflow-cps:+@jar"
+    jenkinsPlugins "org.jenkins-ci.main:maven-plugin:+@jar"
 }
