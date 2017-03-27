@@ -74,7 +74,7 @@ EOF</command>
     <hudson.plugins.gradle.Gradle>
       <description/>
       <switches/>
-      <tasks>clean build --init-script adapt_gradle_build_for_microservice_pipeline.gradle --continue --stacktrace --parallel -Pproject.version=${APP_VERSION} -PbuildNr=${APP_VERSION}</tasks>
+      <tasks>clean build --init-script adapt_gradle_build_for_microservice_pipeline.gradle --continue --stacktrace --parallel -PcurrentVersion=${APP_VERSION}</tasks>
       <rootBuildScriptDir/>
       <buildFile/>
       <gradleName>(Default)</gradleName>
@@ -89,7 +89,7 @@ EOF</command>
         <hudson.plugins.gradle.Gradle>
           <description/>
           <switches/>
-          <tasks>publish --stacktrace -Pproject.version=${APP_VERSION} -PbuildNr=${APP_VERSION}</tasks>
+          <tasks>publish --stacktrace -PcurrentVersion=${APP_VERSION}</tasks>
           <rootBuildScriptDir/>
           <buildFile/>
           <gradleName>(Default)</gradleName>
