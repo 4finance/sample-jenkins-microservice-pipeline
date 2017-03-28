@@ -18,9 +18,10 @@ class XmlComparatorSpec extends Specification implements XmlComparator {
         when:
             System.setProperty('outputActualXml', 'false') //so that no garbage is output
             compareXmls(
-                    'whatever.xml',
-                    "<project><steps>${build}${publishJunit}</steps></project>",
-                    "<project><steps>${publishJunit}${build}</steps></project>"
+                'whatever.xml',
+                "<project><steps>${build}${publishJunit}</steps></project>",
+                "<project><steps>${publishJunit}${build}</steps></project>",
+                false
             )
 
         then:
