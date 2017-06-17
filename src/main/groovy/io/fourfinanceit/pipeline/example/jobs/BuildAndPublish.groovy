@@ -1,12 +1,16 @@
 package io.fourfinanceit.pipeline.example.jobs
 
+import com.ofg.job.component.JobComponent
 import com.ofg.pipeline.core.JenkinsVariables
 import io.fourfinanceit.pipeline.example.JobDslConfigureHacksUtil
-import io.fourfinanceit.pipeline.example.MicroserviceJobUtils
 import io.fourfinanceit.pipeline.example.MicroserviceProject
+import io.fourfinanceit.pipeline.example.common.component.InlineComponent
 import javaposse.jobdsl.dsl.Job
 import javaposse.jobdsl.dsl.helpers.step.StepContext
 
+import java.util.function.BooleanSupplier
+
+import static com.ofg.job.component.triggers.PollSCMTrigger.onCron
 import static io.fourfinanceit.pipeline.example.JenkinsVariable.APP_VERSION
 import static io.fourfinanceit.pipeline.example.JenkinsVariable.BUILD_DATETIME
 import static io.fourfinanceit.pipeline.example.JenkinsVariable.BUILD_DISPLAY_NAME
@@ -14,6 +18,9 @@ import static io.fourfinanceit.pipeline.example.JenkinsVariable.GIT_COMMIT
 import static io.fourfinanceit.pipeline.example.JenkinsVariable.GIT_COMMIT_SHORT
 import static io.fourfinanceit.pipeline.example.JenkinsVariable.PIPELINE_VERSION
 import static io.fourfinanceit.pipeline.example.JenkinsVariable.SCM_POLLING_ENABLED
+import static io.fourfinanceit.pipeline.example.MicroserviceJobUtils.configureGit
+import static io.fourfinanceit.pipeline.example.common.component.ConditionalComponent.use
+import static io.fourfinanceit.pipeline.example.common.component.InlineComponent.component
 
 /**
  * @author Artur Gajowy
@@ -22,29 +29,22 @@ import static io.fourfinanceit.pipeline.example.JenkinsVariable.SCM_POLLING_ENAB
  * @author Marek Kapowicki
  */
 class BuildAndPublish extends MicroserviceJobDefinition {
+    
     @Override
     void configure(Job job, MicroserviceProject project, JenkinsVariables jenkinsVariables) {
-        job.with {
-            setupEnvironmentVariables(job)
-            configure JobDslConfigureHacksUtil.injectAndMaskPasswords()
-            scm MicroserviceJobUtils.configureGit(project)
-            if (project.scmConfig.cronToPoll && jenkinsVariables.getBoolean(SCM_POLLING_ENABLED, true)) {
-                triggers {
-                    scm(project.scmConfig.cronToPoll)
-                }
-            }
-            addGradleBuildStep(job, project)
-            //addArchiveJunitAsBuildStep(job)
-            steps {
-                ifBuildStillSuccessful(delegate as StepContext) {
-                    gradle("publish --stacktrace ${projectVersionParameters()}")
-                }
-            }
-        }
+        (
+            setupEnvironmentVariables() &
+                maskPasswords() &
+                configureGit(project) &
+                use(onCron(project.scmConfig.cronToPoll))
+                    .when(scmPoolingEnabled(jenkinsVariables)) &
+                buildProject() &
+                publishArtifacts()
+        ).applyOn(job)
     }
-
-    private setupEnvironmentVariables(Job job) {
-        job.with {
+    
+    private JobComponent<Job> setupEnvironmentVariables() {
+        return component {
             environmentVariables {
                 groovy($/
                     String buildDateTime = new Date().format("yyyyMMdd-HHmmss")
@@ -65,45 +65,50 @@ class BuildAndPublish extends MicroserviceJobDefinition {
             }
         }
     }
-
-    private addGradleBuildStep(Job job, MicroserviceProject project) {
-        def initScriptName = 'adapt_gradle_build_for_microservice_pipeline.gradle'
-        def initscript = getClass().getResource("/io/fourfinanceit/pipeline/$initScriptName")
-        job.with {
+    
+    private JobComponent<Job> maskPasswords() {
+        return component {
+            configure JobDslConfigureHacksUtil.injectAndMaskPasswords()
+        }
+    }
+    
+    private BooleanSupplier scmPoolingEnabled(JenkinsVariables jenkinsVariables) {
+        return { jenkinsVariables.getBoolean(SCM_POLLING_ENABLED, true) }
+    }
+    
+    private JobComponent<Job> buildProject() {
+        String initScriptName = 'adapt_gradle_build_for_microservice_pipeline.gradle'
+        return component {
             steps {
-                shell("cat > $initScriptName <<- EOF\n${initscript.text}\nEOF")
+                shell("cat > $initScriptName <<- EOF\n${loadScript("/io/fourfinanceit/pipeline/$initScriptName")}\nEOF")
                 gradle(
-                        "clean build --init-script $initScriptName --continue --stacktrace --parallel " +
-                                projectVersionParameters()
+                    "clean build --init-script $initScriptName --continue --stacktrace --parallel " +
+                        projectVersionParameters()
                 )
             }
         }
     }
-
+    
+    String loadScript(String scriptLocation) {
+        return getClass()
+            .getResource(scriptLocation)
+            .text
+    }
+    
     private String projectVersionParameters() {
         /-PcurrentVersion=${APP_VERSION.reference}/
     }
-
-    private void addArchiveJunitAsBuildStep(Job job) {
-        job.with {
+    
+    private JobComponent<Job> publishArtifacts() {
+        return component {
             steps {
-                configure { project ->
-                    project / 'builders' / 'org.jenkinsci.plugins.conditionalbuildstep.ConditionalBuilder' << {
-                        runCondition(class: 'org.jenkins_ci.plugins.run_condition.core.AlwaysRun')
-                        runner(class: 'org.jenkins_ci.plugins.run_condition.BuildStepRunner$Fail')
-                        conditionalbuilders {
-                            'hudson.tasks.junit.JUnitResultArchiver' {
-                                testResults(DEFAULT_GRADLE_JUNIT_XML_REPORTS_PATH)
-                                keepLongStdio('false')
-                                testDataPublishers()
-                            }
-                        }
-                    }
+                ifBuildStillSuccessful(delegate as StepContext) {
+                    gradle("publish --stacktrace ${projectVersionParameters()}")
                 }
             }
         }
     }
-
+    
     private static void ifBuildStillSuccessful(StepContext context, @DelegatesTo(StepContext) Closure closure) {
         context.with {
             conditionalSteps {

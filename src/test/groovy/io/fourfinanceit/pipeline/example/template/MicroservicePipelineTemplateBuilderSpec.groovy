@@ -2,7 +2,7 @@ package io.fourfinanceit.pipeline.example.template
 
 import com.ofg.pipeline.core.JenkinsVariables
 import com.ofg.pipeline.core.PipelineTemplateBuilder
-import io.fourfinanceit.pipeline.example.AbstractJobXmlComparingSpec
+import com.ofg.pipeline.test.AbstractJobXmlComparingSpec
 import io.fourfinanceit.pipeline.example.MicroservicePipelineTemplate
 import io.fourfinanceit.pipeline.example.MicroserviceProject
 import io.fourfinanceit.pipeline.example.Nameable
@@ -37,7 +37,7 @@ class MicroservicePipelineTemplateBuilderSpec extends AbstractJobXmlComparingSpe
 //            "$JOB_NAME-sonar",
     ]
 
-    String expectedJobXmlsPath = '/jobs/'
+    File expectedJobXmlsPath = new File('./src/test/resources/jobs/')
 
     @Override
     void setupJobs(DslFactory dslFactory) {
