@@ -17,14 +17,15 @@ configurations {
 
 repositories {
     mavenLocal()
-    maven { url "https://jitpack.io" }
     maven { url 'http://repo.jenkins-ci.org/releases/' }
     jcenter()
     mavenCentral()
 }
 
 dependencies {
-    lib 'io.fourfinanceit.pipeline:jenkins-pipeline-dsl:0.4.9'
+    
+    lib 'io.fourfinanceit.pipeline:jenkins-pipeline-core:0.5.0'
+    lib 'io.fourfinanceit.pipeline:jenkins-job-components:0.5.0'
 
     jenkins "org.jenkins-ci.main:jenkins-core:${project.ext.jenkinsVersion}"
 
@@ -36,6 +37,7 @@ dependencies {
     testCompile('org.spockframework:spock-core:1.0-groovy-2.4') {
         exclude module: 'groovy-all'
     }
+    testCompile 'io.fourfinanceit.pipeline:jenkins-pipeline-test-utils:0.5.0'
     testCompile 'xmlunit:xmlunit:1.6'
 
     jobsCompile sourceSets.main.output
